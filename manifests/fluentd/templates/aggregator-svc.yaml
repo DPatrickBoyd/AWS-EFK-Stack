@@ -1,0 +1,30 @@
+---
+# Source: fluentd/templates/aggregator-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: elastic-fluentd-aggregator
+  labels:
+    app.kubernetes.io/name: fluentd
+    helm.sh/chart: fluentd-4.4.3
+    app.kubernetes.io/instance: elastic
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: aggregator
+    app: aggregator
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      
+      port: 9880
+      protocol: TCP
+      targetPort: http
+    - name: tcp
+      
+      port: 24224
+      protocol: TCP
+      targetPort: tcp
+  selector:
+    app.kubernetes.io/name: fluentd
+    app.kubernetes.io/instance: elastic
+    app.kubernetes.io/component: aggregator

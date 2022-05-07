@@ -1,0 +1,121 @@
+---
+# Source: fluentd/templates/forwarder-daemonset.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: elastic-fluentd
+  labels:
+    app.kubernetes.io/name: fluentd
+    helm.sh/chart: fluentd-4.4.3
+    app.kubernetes.io/instance: elastic
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: forwarder
+    ## Istio Labels: https://istio.io/docs/ops/deployment/requirements/
+    app: forwarder
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fluentd
+      app.kubernetes.io/instance: elastic
+      app.kubernetes.io/component: forwarder
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fluentd
+        helm.sh/chart: fluentd-4.4.3
+        app.kubernetes.io/instance: elastic
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: forwarder
+        app: forwarder
+      annotations:
+        checksum/config: e359cb2c021e0adc9d08ce70018fd1a6af50a10eb3fa3a4ec5cbfc15e5b72d34
+    spec:
+      
+      serviceAccountName: elastic-fluentd-forwarder
+      priorityClassName: ""
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          
+        nodeAffinity:
+          
+      securityContext:
+        fsGroup: 0
+        runAsGroup: 0
+        runAsUser: 0
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: fluentd
+          image: docker.io/bitnami/fluentd:1.14.3-debian-10-r0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: FLUENTD_CONF
+              value: fluentd.conf
+            - name: FLUENTD_OPT
+              value: ""
+            - name: FLUENTD_DAEMON_USER
+              value: "root"
+            - name: FLUENTD_DAEMON_GROUP
+              value: "root"
+          ports:
+            - containerPort: 9880
+              name: http
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /fluentd.healthcheck?json=%7B%22ping%22%3A+%22pong%22%7D
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 6
+          readinessProbe:
+            httpGet:
+              path: /fluentd.healthcheck?json=%7B%22ping%22%3A+%22pong%22%7D
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 6
+          resources:
+            limits: {}
+            requests: {}
+          # yamllint disable rule:indentation
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: false
+          # yamllint enable rule:indentation
+          
+          volumeMounts:
+            - name: fluentd-config
+              mountPath: /opt/bitnami/fluentd/conf
+            - name: buffer
+              mountPath: /opt/bitnami/fluentd/logs/buffers
+            - name: varlog
+              mountPath: /var/log
+            - name: varlibdockercontainers
+              mountPath: /var/lib/docker/containers
+              readOnly: true
+      volumes:
+        - name: fluentd-config
+          configMap:
+            name: elastic-fluentd-forwarder-cm
+        - name: buffer
+          emptyDir: {}
+        - name: varlog
+          hostPath:
+            path: /var/log
+        - name: varlibdockercontainers
+          hostPath:
+            path: /var/lib/docker/containers

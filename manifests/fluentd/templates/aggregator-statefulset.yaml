@@ -1,0 +1,120 @@
+---
+# Source: fluentd/templates/aggregator-statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: elastic-fluentd
+  labels:
+    app.kubernetes.io/name: fluentd
+    helm.sh/chart: fluentd-4.4.3
+    app.kubernetes.io/instance: elastic
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: aggregator
+    ## Istio Labels: https://istio.io/docs/ops/deployment/requirements/
+    app: aggregator
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fluentd
+      app.kubernetes.io/instance: elastic
+      app.kubernetes.io/component: aggregator
+  serviceName: elastic-fluentd-headless
+  replicas: 1
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fluentd
+        helm.sh/chart: fluentd-4.4.3
+        app.kubernetes.io/instance: elastic
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: aggregator
+        app: aggregator
+      annotations:
+        checksum/config: 2b9465cc22dfcd195759d4957cf090e64461a69674800d2346b924334008dfa0
+    spec:
+      
+      serviceAccountName: default
+      securityContext:
+        fsGroup: 1001
+        runAsGroup: 1001
+        runAsUser: 1001
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: fluentd
+                    app.kubernetes.io/instance: elastic
+                    app.kubernetes.io/component: aggregator
+                namespaces:
+                  - "elastic"
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+          
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: fluentd
+          image: docker.io/bitnami/fluentd:1.14.3-debian-10-r0
+          imagePullPolicy: "IfNotPresent"
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: FLUENTD_CONF
+              value: fluentd.conf
+            - name: FLUENTD_OPT
+              value: ""
+          ports:
+            - name: tcp
+              containerPort: 24224
+              protocol: TCP
+            - containerPort: 9880
+              name: http
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /fluentd.healthcheck?json=%7B%22ping%22%3A+%22pong%22%7D
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 6
+          readinessProbe:
+            httpGet:
+              path: /fluentd.healthcheck?json=%7B%22ping%22%3A+%22pong%22%7D
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 6
+          resources:
+            limits: {}
+            requests: {}
+          # yamllint disable rule:indentation
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: false
+          # yamllint enable rule:indentation
+          
+          volumeMounts:
+            - name: fluentd-config
+              mountPath: /opt/bitnami/fluentd/conf
+            - name: buffer
+              mountPath: /opt/bitnami/fluentd/logs/buffers
+      volumes:
+        - name: fluentd-config
+          configMap:
+            name: elastic-fluentd-aggregator-cm
+        - name: buffer
+          emptyDir: {}
