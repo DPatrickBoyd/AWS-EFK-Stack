@@ -40,13 +40,31 @@ spec:
         podAffinity:
           
         podAntiAffinity:
-          
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - master
+            topologyKey: "failure-domain.beta.kubernetes.io/zone"
+
         nodeAffinity:
           
       serviceAccountName: default
       securityContext:
         fsGroup: 1001
       initContainers:
+        - name: configinit
+          image: docker.io/bitnami/elasticsearch:7.16.1-debian-10-r2
+          imagePullPolicy: "IfNotPresent"
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              ZONE=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone);
+              yq e ".node.attr.zone = \"$ZONE\"" -i '/opt/bitnami/elasticsearch/config/elasticsearch.yml';
+              
         ## Image that performs the sysctl operation to modify Kernel settings (needed sometimes to avoid boot errors)
         - name: sysctl
           image: docker.io/bitnami/bitnami-shell:10-debian-10-r278
@@ -139,8 +157,6 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
-        
-        
         resources:
           requests:
             storage: "8Gi"

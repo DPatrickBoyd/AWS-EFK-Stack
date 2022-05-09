@@ -40,6 +40,14 @@ spec:
         podAffinity:
           
         podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - coordinating-only
+            topologyKey: "kubernetes.io/hostname"
           
         nodeAffinity:
           
