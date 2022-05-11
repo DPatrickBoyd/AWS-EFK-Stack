@@ -1,0 +1,23 @@
+---
+
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: logger
+  labels:
+    name: logger
+
+
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: logger
+  namespace: logger
+spec:
+  containers:
+  - name: lorum-generator
+    image: dwdraju/alpine-curl-jq
+    command: ["/bin/sh"]
+    args: ["-c","for i in {1..10}; do curl -s -X POST https://lipsum.com/feed/json | jq -r '.feed.lipsum'; date ; sleep 5; done;"]
