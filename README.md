@@ -57,7 +57,7 @@ $ cd ./manifests/kibana/templates
 $ kubectl apply -f service.yaml
 $ kubectl apply -f deployment.yaml
 
-# You can port forward the Kibana UI by running  `kubectl port-forward pods/<name of pod> 5601:5601`. Then head to http://localhost:5601/app/home#/ in your browser.
+# You can port forward the Kibana UI by running  `kubectl port-forward pods/<name of pod> 5601:5601 -n elastic`. Then head to http://localhost:5601/app/home#/ in your browser.
 ```
 ## Logging App Setup:
 ```
