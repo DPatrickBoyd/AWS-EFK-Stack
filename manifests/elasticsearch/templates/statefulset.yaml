@@ -1,5 +1,5 @@
 ---
-# Source: elasticsearch/templates/statefulset.yaml
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -20,15 +20,6 @@ spec:
   podManagementPolicy: Parallel
   updateStrategy:
     type: RollingUpdate
-  volumeClaimTemplates:
-  - metadata:
-      name: elasticsearch-master
-    spec:
-      accessModes:
-      - ReadWriteOnce
-      resources:
-        requests:
-          storage: 30Gi
   template:
     metadata:
       namespace: elastic

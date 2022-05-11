@@ -10,7 +10,6 @@ metadata:
 
 ---
 
-# Source: elasticsearch/templates/service.yaml
 kind: Service
 apiVersion: v1
 metadata:
@@ -35,8 +34,9 @@ spec:
   - name: transport
     protocol: TCP
     port: 9300
+    
 ---
-# Source: elasticsearch/templates/service.yaml
+
 kind: Service
 apiVersion: v1
 metadata:
