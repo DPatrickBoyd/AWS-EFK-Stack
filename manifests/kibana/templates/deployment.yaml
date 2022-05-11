@@ -1,0 +1,108 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+  namespace: elastic
+  labels: 
+    app: kibana
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+      annotations:
+        
+    spec:
+      automountServiceAccountToken: true
+      securityContext:
+        fsGroup: 1000
+      volumes:
+      containers:
+      - name: kibana
+        securityContext:
+          capabilities:
+            drop:
+            - ALL
+          runAsNonRoot: true
+          runAsUser: 1000
+        image: "docker.elastic.co/kibana/kibana:7.17.3"
+        imagePullPolicy: "IfNotPresent"
+        env:
+          - name: ELASTICSEARCH_HOSTS
+            value: "http://elasticsearch-master-headless:9200"
+          - name: SERVER_HOST
+            value: "0.0.0.0"
+          - name: NODE_OPTIONS
+            value: --max-old-space-size=1800
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 3
+          timeoutSeconds: 5
+          exec:
+            command:
+              - bash
+              - -c
+              - |
+                #!/usr/bin/env bash -e
+
+                # Disable nss cache to avoid filling dentry cache when calling curl
+                # This is required with Kibana Docker using nss < 3.52
+                export NSS_SDB_USE_CACHE=no
+
+                http () {
+                    local path="${1}"
+                    set -- -XGET -s --fail -L
+
+                    if [ -n "${ELASTICSEARCH_USERNAME}" ] && [ -n "${ELASTICSEARCH_PASSWORD}" ]; then
+                      set -- "$@" -u "${ELASTICSEARCH_USERNAME}:${ELASTICSEARCH_PASSWORD}"
+                    fi
+
+                    STATUS=$(curl --output /dev/null --write-out "%{http_code}" -k "$@" "http://localhost:5601${path}")
+                    if [[ "${STATUS}" -eq 200 ]]; then
+                      exit 0
+                    fi
+
+                    echo "Error: Got HTTP code ${STATUS} but expected a 200"
+                    exit 1
+                }
+
+                http "/app/kibana"
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - bash
+              - -c
+              - |
+                #!/bin/bash
+                # Config the index_pattern
+                TEMPLATE_NAME=deault_logstash
+                INDEX_PATTERN="logstash-*"
+                KIBANA_URL=http://localhost:5601
+          
+                # Wait until service is ready
+                while [[ "$(curl -s -o /dev/null -w '%{http_code}\n' $KIBANA_URL/app/kibana)" != "200" ]]; do sleep 1; done
+          
+                # Apply default Index Pattern into Kibana
+                curl  -X POST -v $KIBANA_URL/api/saved_objects/index-pattern/$TEMPLATE_NAME \
+                -H 'kbn-xsrf: true' -H 'Content-Type: application/json' \
+                -d '{"attributes": {"title": "'$INDEX_PATTERN'"}}'
+        ports:
+        - containerPort: 5601
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+          requests:
+            cpu: 500m
+            memory: 1Gi
+        volumeMounts:
