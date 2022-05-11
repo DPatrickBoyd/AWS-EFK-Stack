@@ -70,7 +70,7 @@ $ kubectl apply -f loggerpod.yaml
 ---------
 
 
-That's it! I had a great time doing this, spent a lot more time than I should have on it. However, prior to this I had very limited exposed to Elasticsearch since I have used primary things like Data Dog, seq, and New Relic
+That's it! I had a great time doing this and spent a lot more time than I should have on it! Prior to this, I had limited exposed to Elasticsearch since I have generally used things like Data Dog, seq, and New Relic professionally. I learn quite a bit, both about Elasticsearch and kubernetes in general during this exercise. Thank you
 
 
 
