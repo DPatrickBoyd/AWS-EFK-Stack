@@ -31,7 +31,7 @@ $ kubectl apply -f poddisruptionbudget.yaml
 
 # Apply the stateful set. The pods may take up to 2 minutes before they show healthy. 
 # If you want to verify that the clusters are in fact set to different AZs, exec inside of a master pod like this:
-# `kubectl exec -i -t -n elastic elasticsearch-master-0 -c elasticsearch -- sh -c "clear; (bash || ash || sh)"` and 
+# `kubectl exec -i -t -n elastic elasticsearch-master-0 -c elasticsearch -- sh -c "clear; (bash || ash || sh)"` and then
 # `curl http://localhost:9200/_cluster/state?pretty | more`. 
 # You can hit enter to scroll and see the attributes of the different nodes, including something like "zone" : "us-west-2b".
 
@@ -45,7 +45,7 @@ $ cd ./manifests/fluentd/templates
 $ kubectl apply -f service-account.yaml
 # Apply daemonset
 $ kubectl apply -f daemonset.yaml
-# Once again, if this was a public cluster, I would be more careful about the permissions given to the ServiceAccount, possibly limit it from the masters.
+# Once again, if this was a public cluster, I would be more careful about the permissions given to the ServiceAccount
 ```
 
 ## Kibana Setup:
