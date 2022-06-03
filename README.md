@@ -30,8 +30,9 @@ $ kubectl apply -f configmap.yaml
 $ kubectl apply -f poddisruptionbudget.yaml
 
 # Apply the stateful set. The pods may take up to 2 minutes before they show healthy. 
-# If you want to verify that the clusters are in fact set to different AZs, exec inside of a master pod like this `kubectl exec -i -t -n elastic elasticsearch-master-0 -c elasticsearch -- sh -c "clear; (bash || ash || sh)"` and 
-`curl http://localhost:9200/_cluster/state?pretty | more`. 
+# If you want to verify that the clusters are in fact set to different AZs, exec inside of a master pod like this:
+# `kubectl exec -i -t -n elastic elasticsearch-master-0 -c elasticsearch -- sh -c "clear; (bash || ash || sh)"` and 
+# `curl http://localhost:9200/_cluster/state?pretty | more`. 
 # You can hit enter to scroll and see the attributes of the different nodes, including something like "zone" : "us-west-2b".
 
 $ kubectl apply -f statefulset.yaml
